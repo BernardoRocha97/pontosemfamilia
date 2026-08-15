@@ -25,4 +25,10 @@ export const {
   addEntry,
   deleteEntry,
   subscribe,
+  listChallenges,
+  createChallenge,
+  updateChallenge,
+  deleteChallenge,
+  listChallengeAwards,
+  recordChallengeAward,
 } = impl

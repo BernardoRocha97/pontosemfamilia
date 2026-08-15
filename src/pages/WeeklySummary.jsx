@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import confetti from 'canvas-confetti'
-import { listProfiles, listEntries } from '../lib/db'
+import { listProfiles, listEntries, listChallenges } from '../lib/db'
 import { startOfWeek, startOfDay } from '../lib/period'
+import { evaluateChallenges } from '../lib/challenges'
 import './WeeklySummary.css'
 
 function computeStreak(entries) {
@@ -20,14 +21,21 @@ function computeStreak(entries) {
 export default function WeeklySummary() {
   const [profiles, setProfiles] = useState([])
   const [entries, setEntries] = useState([])
+  const [challenges, setChallenges] = useState([])
   const [celebrated, setCelebrated] = useState(false)
 
   useEffect(() => {
-    Promise.all([listProfiles(), listEntries()]).then(([p, e]) => {
+    Promise.all([listProfiles(), listEntries(), listChallenges()]).then(([p, e, c]) => {
       setProfiles(p)
       setEntries(e)
+      setChallenges(c)
     })
   }, [])
+
+  const challengeProgress = useMemo(
+    () => evaluateChallenges(challenges, entries, profiles),
+    [challenges, entries, profiles]
+  )
 
   const standings = useMemo(() => {
     const since = startOfWeek()
@@ -96,6 +104,37 @@ export default function WeeklySummary() {
           </div>
         ))}
       </div>
+
+      {challengeProgress.length > 0 && (
+        <>
+          <h3 className="section-label" style={{ marginTop: 22 }}>
+            Desafios ativos
+          </h3>
+          <div className="card challenges-card">
+            {challengeProgress.map((r) => (
+              <div key={`${r.challenge.id}-${r.profile.id}`} className="challenge-progress-row">
+                <span className="profile-avatar challenge-progress-avatar" style={{ '--profile-color': r.profile.color }}>
+                  {r.profile.name.charAt(0)}
+                </span>
+                <div className="challenge-progress-info">
+                  <span className="challenge-progress-name">
+                    {r.challenge.icon} {r.challenge.name}
+                  </span>
+                  <div className="challenge-progress-bar">
+                    <div
+                      className="challenge-progress-fill"
+                      style={{ width: `${Math.min(100, (r.progress / r.challenge.target) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+                <span className="challenge-progress-count">
+                  {r.progress}/{r.challenge.target}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }

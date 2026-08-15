@@ -22,6 +22,25 @@ export function startOfDay(date = new Date()) {
   return d.getTime()
 }
 
+export const FREQUENCY_LABELS = {
+  diaria: 'Diária',
+  semanal: 'Semanal',
+  mensal: 'Mensal',
+}
+
+export function periodStartFor(frequency) {
+  switch (frequency) {
+    case 'diaria':
+      return startOfDay()
+    case 'semanal':
+      return startOfWeek()
+    case 'mensal':
+      return startOfMonth()
+    default:
+      return null
+  }
+}
+
 export function formatRelativeTime(timestamp) {
   const diffMs = Date.now() - timestamp
   const diffMin = Math.floor(diffMs / 60000)

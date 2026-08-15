@@ -1,21 +1,40 @@
 import { useEffect, useState } from 'react'
-import { listTasks, listProfiles, updateTask, deleteTask, setPin, usingMockData } from '../lib/db'
+import {
+  listTasks,
+  listProfiles,
+  updateTask,
+  deleteTask,
+  setPin,
+  usingMockData,
+  listChallenges,
+  createChallenge,
+  updateChallenge,
+  deleteChallenge,
+} from '../lib/db'
 import { useSession } from '../context/SessionContext'
 import TaskFormModal from '../components/TaskFormModal'
+import ChallengeFormModal from '../components/ChallengeFormModal'
+import { FREQUENCY_LABELS } from '../lib/period'
 import './Settings.css'
+
+const UNIT_LABEL = { dia: 'dias', semana: 'semanas' }
 
 export default function Settings() {
   const { profile, logout } = useSession()
   const [tasks, setTasks] = useState([])
   const [profiles, setProfiles] = useState([])
+  const [challenges, setChallenges] = useState([])
   const [editing, setEditing] = useState(null)
+  const [editingChallenge, setEditingChallenge] = useState(null)
+  const [creatingChallenge, setCreatingChallenge] = useState(false)
   const [pinDrafts, setPinDrafts] = useState({})
   const [pinStatus, setPinStatus] = useState({})
 
   async function refresh() {
-    const [t, p] = await Promise.all([listTasks(), listProfiles()])
+    const [t, p, c] = await Promise.all([listTasks(), listProfiles(), listChallenges()])
     setTasks(t)
     setProfiles(p)
+    setChallenges(c)
   }
 
   useEffect(() => {
@@ -51,6 +70,9 @@ export default function Settings() {
           <button key={t.id} className="settings-task-row" onClick={() => setEditing(t)}>
             <span>{t.icon}</span>
             <span className="settings-task-name">{t.name}</span>
+            {t.frequency !== 'ilimitada' && (
+              <span className="settings-task-freq">{FREQUENCY_LABELS[t.frequency]}</span>
+            )}
             <span className={t.points >= 0 ? 'positive' : 'negative'}>
               {t.points >= 0 ? '+' : ''}
               {t.points}
@@ -58,6 +80,36 @@ export default function Settings() {
           </button>
         ))}
       </div>
+
+      <h3 className="section-label">Desafios</h3>
+      <p className="page-subtitle" style={{ marginTop: -6 }}>
+        Bónus automático por cumprir uma tarefa vários dias/semanas seguidos
+      </p>
+      <div className="settings-task-list">
+        {challenges.map((c) => {
+          const task = tasks.find((t) => t.id === c.taskId)
+          return (
+            <button key={c.id} className="settings-task-row" onClick={() => setEditingChallenge(c)}>
+              <span>{c.icon}</span>
+              <span className="settings-task-name">
+                {c.name}
+                <span className="settings-challenge-detail">
+                  {task ? `${task.icon} ${task.name}` : 'tarefa apagada'} · {c.target} {UNIT_LABEL[c.unit]} seguidos
+                </span>
+              </span>
+              <span className="positive">+{c.bonusPoints}</span>
+            </button>
+          )
+        })}
+      </div>
+      <button
+        className="btn btn-ghost btn-block"
+        style={{ marginBottom: 20 }}
+        onClick={() => setCreatingChallenge(true)}
+        disabled={tasks.length === 0}
+      >
+        + Novo desafio
+      </button>
 
       <h3 className="section-label">PINs</h3>
       <div className="card">
@@ -102,6 +154,30 @@ export default function Settings() {
           onDelete={(id) => deleteTask(id)}
           onClose={() => {
             setEditing(null)
+            refresh()
+          }}
+        />
+      )}
+
+      {creatingChallenge && (
+        <ChallengeFormModal
+          tasks={tasks}
+          onSave={(data) => createChallenge(data)}
+          onClose={() => {
+            setCreatingChallenge(false)
+            refresh()
+          }}
+        />
+      )}
+
+      {editingChallenge && (
+        <ChallengeFormModal
+          challenge={editingChallenge}
+          tasks={tasks}
+          onSave={(data) => updateChallenge(editingChallenge.id, data)}
+          onDelete={(id) => deleteChallenge(id)}
+          onClose={() => {
+            setEditingChallenge(null)
             refresh()
           }}
         />

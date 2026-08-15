@@ -1,23 +1,26 @@
-import { useEffect, useState } from 'react'
-import { listTasks, listProfiles, addEntry, createTask, subscribe } from '../lib/db'
+import { useEffect, useMemo, useState } from 'react'
+import { listTasks, listProfiles, listEntries, addEntry, createTask, subscribe } from '../lib/db'
 import { useSession } from '../context/SessionContext'
 import TaskCard from '../components/TaskCard'
 import AssignPointsModal from '../components/AssignPointsModal'
 import TaskFormModal from '../components/TaskFormModal'
+import { periodStartFor } from '../lib/period'
 import './Tasks.css'
 
 export default function Tasks() {
   const { profile } = useSession()
   const [tasks, setTasks] = useState([])
   const [profiles, setProfiles] = useState([])
+  const [entries, setEntries] = useState([])
   const [assigning, setAssigning] = useState(null)
   const [creating, setCreating] = useState(false)
   const [toast, setToast] = useState(null)
 
   async function refresh() {
-    const [t, p] = await Promise.all([listTasks(), listProfiles()])
+    const [t, p, e] = await Promise.all([listTasks(), listProfiles(), listEntries()])
     setTasks(t)
     setProfiles(p)
+    setEntries(e)
   }
 
   useEffect(() => {
@@ -26,8 +29,30 @@ export default function Tasks() {
     return unsubscribe
   }, [])
 
+  const doneTaskIds = useMemo(() => {
+    const done = new Set()
+    for (const task of tasks) {
+      const since = periodStartFor(task.frequency)
+      if (since === null) continue
+      if (entries.some((e) => e.taskId === task.id && e.createdAt >= since)) {
+        done.add(task.id)
+      }
+    }
+    return done
+  }, [tasks, entries])
+
   const positives = tasks.filter((t) => t.points >= 0)
   const negatives = tasks.filter((t) => t.points < 0)
+
+  function handleCardClick(task) {
+    if (doneTaskIds.has(task.id)) {
+      const freq = { diaria: 'hoje', semanal: 'esta semana', mensal: 'este mês' }[task.frequency]
+      setToast(`${task.icon} ${task.name} já foi feita ${freq}`)
+      setTimeout(() => setToast(null), 2200)
+      return
+    }
+    setAssigning(task)
+  }
 
   async function handleAssign(profileId) {
     const task = assigning
@@ -57,7 +82,7 @@ export default function Tasks() {
           <h3 className="section-label">Tarefas de casa</h3>
           <div className="task-grid">
             {positives.map((t) => (
-              <TaskCard key={t.id} task={t} onClick={setAssigning} />
+              <TaskCard key={t.id} task={t} done={doneTaskIds.has(t.id)} onClick={handleCardClick} />
             ))}
           </div>
         </>
@@ -68,7 +93,7 @@ export default function Tasks() {
           <h3 className="section-label">Coisas negativas</h3>
           <div className="task-grid">
             {negatives.map((t) => (
-              <TaskCard key={t.id} task={t} onClick={setAssigning} />
+              <TaskCard key={t.id} task={t} done={doneTaskIds.has(t.id)} onClick={handleCardClick} />
             ))}
           </div>
         </>

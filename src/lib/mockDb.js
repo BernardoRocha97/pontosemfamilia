@@ -13,22 +13,28 @@ function seed() {
       { id: 'p-beatriz', name: 'Beatriz', pin: '0000', color: '#ec4899' },
     ],
     tasks: [
-      { id: 't1', name: 'Lavar a loiça', icon: '🍽️', points: 15, active: true },
-      { id: 't2', name: 'Aspirar a casa', icon: '🧹', points: 20, active: true },
-      { id: 't3', name: 'Tirar o lixo', icon: '🗑️', points: 10, active: true },
-      { id: 't4', name: 'Cozinhar o jantar', icon: '🍳', points: 20, active: true },
-      { id: 't5', name: 'Tratar da roupa', icon: '🧺', points: 15, active: true },
-      { id: 't6', name: 'Limpar a casa de banho', icon: '🚽', points: 20, active: true },
-      { id: 't7', name: 'Fazer as compras', icon: '🛒', points: 15, active: true },
-      { id: 't8', name: 'Arrumar a sala', icon: '🛋️', points: 10, active: true },
-      { id: 't9', name: 'Deixou loiça suja', icon: '💢', points: -15, active: true },
-      { id: 't10', name: 'Esqueceu uma tarefa combinada', icon: '😤', points: -10, active: true },
+      { id: 't1', name: 'Lavar a loiça', icon: '🍽️', points: 15, frequency: 'ilimitada', active: true },
+      { id: 't2', name: 'Aspirar a casa', icon: '🧹', points: 20, frequency: 'semanal', active: true },
+      { id: 't3', name: 'Tirar o lixo', icon: '🗑️', points: 10, frequency: 'ilimitada', active: true },
+      { id: 't4', name: 'Cozinhar o jantar', icon: '🍳', points: 20, frequency: 'ilimitada', active: true },
+      { id: 't5', name: 'Tratar da roupa', icon: '🧺', points: 15, frequency: 'semanal', active: true },
+      { id: 't6', name: 'Limpar a casa de banho', icon: '🚽', points: 20, frequency: 'semanal', active: true },
+      { id: 't7', name: 'Fazer as compras', icon: '🛒', points: 15, frequency: 'ilimitada', active: true },
+      { id: 't8', name: 'Arrumar a sala', icon: '🛋️', points: 10, frequency: 'diaria', active: true },
+      { id: 't11', name: 'Limpar o frigorífico', icon: '🧊', points: 25, frequency: 'mensal', active: true },
+      { id: 't9', name: 'Deixou loiça suja', icon: '💢', points: -15, frequency: 'ilimitada', active: true },
+      { id: 't10', name: 'Esqueceu uma tarefa combinada', icon: '😤', points: -10, frequency: 'ilimitada', active: true },
     ],
     entries: [
       { id: 'e1', taskId: 't1', profileId: 'p-beatriz', points: 15, reason: null, createdAt: now - 1000 * 60 * 60 * 3 },
       { id: 'e2', taskId: 't3', profileId: 'p-bernardo', points: 10, reason: null, createdAt: now - 1000 * 60 * 60 * 20 },
       { id: 'e3', taskId: null, profileId: 'p-beatriz', points: 25, reason: 'Surpresa com o pequeno-almoço', createdAt: now - 1000 * 60 * 60 * 44 },
     ],
+    challenges: [
+      { id: 'c1', name: 'Semana de jantares', icon: '🍳', taskId: 't4', unit: 'dia', target: 7, bonusPoints: 50, active: true },
+      { id: 'c2', name: 'Casa impecável', icon: '🧹', taskId: 't2', unit: 'semana', target: 4, bonusPoints: 60, active: true },
+    ],
+    challengeAwards: [],
   }
 }
 
@@ -88,10 +94,10 @@ export async function listTasks() {
   return db.tasks.filter((t) => t.active).sort((a, b) => a.name.localeCompare(b.name))
 }
 
-export async function createTask({ name, icon, points }) {
+export async function createTask({ name, icon, points, frequency }) {
   await delay()
   const db = load()
-  const task = { id: uid(), name, icon: icon || '⭐', points, active: true }
+  const task = { id: uid(), name, icon: icon || '⭐', points, frequency: frequency || 'ilimitada', active: true }
   db.tasks.push(task)
   save(db)
   notify()
@@ -123,6 +129,7 @@ function hydrateEntry(entry, db) {
   const profile = db.profiles.find((p) => p.id === entry.profileId) || null
   return {
     id: entry.id,
+    taskId: entry.taskId,
     points: entry.points,
     reason: entry.reason,
     createdAt: entry.createdAt,
@@ -169,4 +176,60 @@ export function subscribe(callback) {
     bus.removeEventListener('change', callback)
     window.removeEventListener('storage', callback)
   }
+}
+
+export async function listChallenges() {
+  await delay()
+  const db = load()
+  return db.challenges.filter((c) => c.active).sort((a, b) => a.name.localeCompare(b.name))
+}
+
+export async function createChallenge({ name, icon, taskId, unit, target, bonusPoints }) {
+  await delay()
+  const db = load()
+  const challenge = { id: uid(), name, icon: icon || '🏅', taskId, unit, target, bonusPoints, active: true }
+  db.challenges.push(challenge)
+  save(db)
+  notify()
+  return challenge
+}
+
+export async function updateChallenge(id, patch) {
+  await delay()
+  const db = load()
+  const challenge = db.challenges.find((c) => c.id === id)
+  if (challenge) {
+    Object.assign(challenge, patch)
+    save(db)
+    notify()
+  }
+  return challenge
+}
+
+export async function deleteChallenge(id) {
+  await delay()
+  const db = load()
+  db.challenges = db.challenges.filter((c) => c.id !== id)
+  save(db)
+  notify()
+}
+
+export async function listChallengeAwards() {
+  await delay()
+  const db = load()
+  return db.challengeAwards.map((a) => ({ ...a }))
+}
+
+export async function recordChallengeAward({ challengeId, profileId, streakKey }) {
+  await delay()
+  const db = load()
+  const exists = db.challengeAwards.some(
+    (a) => a.challengeId === challengeId && a.profileId === profileId && a.streakKey === streakKey
+  )
+  if (exists) return null
+  const award = { id: uid(), challengeId, profileId, streakKey }
+  db.challengeAwards.push(award)
+  save(db)
+  notify()
+  return award
 }

@@ -51,6 +51,24 @@
   color: var(--red);
 }
 
+.task-frequency {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.task-card.task-done {
+  opacity: 0.6;
+}
+
+.task-card.task-done .task-frequency {
+  color: var(--green);
+  background: var(--green-soft);
+}
+
 .add-task-btn {
   margin-top: 20px;
 }

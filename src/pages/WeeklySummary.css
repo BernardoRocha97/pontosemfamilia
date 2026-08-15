@@ -94,3 +94,59 @@
   color: var(--text-muted);
   font-weight: 600;
 }
+
+.challenges-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.challenge-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.challenge-progress-avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.challenge-progress-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.challenge-progress-name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.challenge-progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.challenge-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--pink));
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.challenge-progress-count {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}

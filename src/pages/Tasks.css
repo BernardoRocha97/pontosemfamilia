@@ -1,0 +1,73 @@
+.section-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 18px 0 10px;
+}
+
+.task-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.task-card {
+  background: var(--card);
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  border-left: 4px solid var(--green);
+}
+
+.task-card.task-negative {
+  border-left-color: var(--red);
+}
+
+.task-icon-badge {
+  font-size: 22px;
+}
+
+.task-name {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.task-points {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.task-negative .task-points {
+  color: var(--red);
+}
+
+.add-task-btn {
+  margin-top: 20px;
+}
+
+.toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  z-index: 200;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
